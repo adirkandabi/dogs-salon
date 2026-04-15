@@ -1,0 +1,18 @@
+# User-specific files
+.vs/
+.vscode/
+
+# Build results
+[Dd]ebug/
+[Rr]elease/
+bin/
+obj/
+
+# Database files
+*.mdf
+*.ldf
+
+# Operating system files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
