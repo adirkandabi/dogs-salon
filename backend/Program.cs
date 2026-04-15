@@ -3,6 +3,9 @@ using DogsSalon.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+
+using Swashbuckle.AspNetCore.SwaggerGen;
+
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -11,7 +14,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 // Add services to the container.
 builder.Services.AddScoped<AuthService>();
-
+builder.Services.AddScoped<AppointmentService>();
 // Add controllers and Swagger support
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
