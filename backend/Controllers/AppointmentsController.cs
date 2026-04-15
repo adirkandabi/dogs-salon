@@ -31,17 +31,30 @@ public class AppointmentsController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateAppointmentDto dto)
     {
-        await _appointmentService.CreateAppointmentAsync(GetUserId(), dto);
-        return Ok(new { message = "Appointment created successfully" });
+        try
+        {
+            await _appointmentService.CreateAppointmentAsync(GetUserId(), dto);
+            return Ok(new { message = "Appointment created successfully" });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(int id, [FromBody] CreateAppointmentDto dto)
     {
-        var success = await _appointmentService.UpdateAppointmentAsync(id, GetUserId(), dto);
-        if (!success) return NotFound(new { message = "Appointment not found or not authorized" });
-
-        return Ok(new { message = "Appointment updated successfully" });
+        try
+        {
+            var success = await _appointmentService.UpdateAppointmentAsync(id, GetUserId(), dto);
+            if (!success) return NotFound(new { message = "Appointment not found" });
+            return Ok(new { message = "Updated successfully" });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
     [HttpDelete("{id}")]

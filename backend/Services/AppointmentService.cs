@@ -17,14 +17,22 @@ public class AppointmentService
     // Create appointment and calculate discount using stored procedure
     public async Task CreateAppointmentAsync(int userId, CreateAppointmentDto dto)
     {
-        var userIdParam = new SqlParameter("@UserId", userId);
-        var dogSizeIdParam = new SqlParameter("@DogSizeId", dto.DogSizeId);
-        var dateParam = new SqlParameter("@AppointmentDate", dto.AppointmentDate);
+        try
+        {
+            var parameters = new[] {
+            new SqlParameter("@UserId", userId),
+            new SqlParameter("@DogSizeId", dto.DogSizeId),
+            new SqlParameter("@AppointmentDate", dto.AppointmentDate)
+        };
 
-        // Execute the stored procedure to create the appointment and calculate the discount
-        await _context.Database.ExecuteSqlRawAsync(
-            "EXEC sp_CreateAppointment @UserId, @DogSizeId, @AppointmentDate",
-            userIdParam, dogSizeIdParam, dateParam);
+            await _context.Database.ExecuteSqlRawAsync(
+                "EXEC sp_CreateAppointment @UserId, @DogSizeId, @AppointmentDate", parameters);
+        }
+        catch (SqlException ex) when (ex.Number == 50000 || ex.Message.Contains("Conflict"))
+        {
+            
+            throw new InvalidOperationException(ex.Message);
+        }
     }
 
     // Retrieve all appointments through the view
@@ -57,16 +65,23 @@ public class AppointmentService
     // Update appointment 
     public async Task<bool> UpdateAppointmentAsync(int appointmentId, int userId, CreateAppointmentDto dto)
     {
-        var idParam = new SqlParameter("@AppointmentId", appointmentId);
-        var userParam = new SqlParameter("@UserId", userId);
-        var sizeParam = new SqlParameter("@DogSizeId", dto.DogSizeId);
-        var dateParam = new SqlParameter("@AppointmentDate", dto.AppointmentDate);
+        try
+        {
+            var parameters = new[] {
+            new SqlParameter("@AppointmentId", appointmentId),
+            new SqlParameter("@UserId", userId),
+            new SqlParameter("@DogSizeId", dto.DogSizeId),
+            new SqlParameter("@AppointmentDate", dto.AppointmentDate)
+        };
 
-        
-        var rowsAffected = await _context.Database.ExecuteSqlRawAsync(
-            "EXEC sp_UpdateAppointment @AppointmentId, @UserId, @DogSizeId, @AppointmentDate",
-            idParam, userParam, sizeParam, dateParam);
+            var rowsAffected = await _context.Database.ExecuteSqlRawAsync(
+                "EXEC sp_UpdateAppointment @AppointmentId, @UserId, @DogSizeId, @AppointmentDate", parameters);
 
-        return rowsAffected > 0;
+            return rowsAffected > 0;
+        }
+        catch (SqlException ex) when (ex.Number == 50000 || ex.Message.Contains("Conflict"))
+        {
+            throw new InvalidOperationException(ex.Message);
+        }
     }
 }

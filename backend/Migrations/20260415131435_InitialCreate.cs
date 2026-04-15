@@ -92,44 +92,82 @@ namespace DogsSalon.Migrations
                 name: "IX_Appointments_UserId",
                 table: "Appointments",
                 column: "UserId");
-            // Create the view for appointment summaries
             migrationBuilder.Sql(@"
-                        EXEC('CREATE VIEW vw_AppointmentSummaries AS
-                        SELECT a.Id AS AppointmentId, u.FirstName AS CustomerName, 
-                               ds.SizeName AS DogSizeName, a.AppointmentDate, a.FinalPrice AS Price, a.CreatedAt
-                        FROM Appointments a
-                        JOIN Users u ON a.UserId = u.Id
-                        JOIN DogSizes ds ON a.DogSizeId = ds.Id')
-                    ");
-            // Create the stored procedure for creating appointments with discount logic
-            migrationBuilder.Sql(@"
-                    EXEC('CREATE PROCEDURE sp_CreateAppointment 
-                        @UserId INT, 
-                        @DogSizeId INT, 
-                        @AppointmentDate DATETIME
-                    AS
+                CREATE PROCEDURE sp_CreateAppointment 
+                    @UserId INT, @DogSizeId INT, @AppointmentDate DATETIME
+                AS
+                BEGIN
+                    SET NOCOUNT ON;
+                    DECLARE @Duration INT, @EndTime DATETIME, @BasePrice DECIMAL(18,2);
+                    SELECT @Duration = DurationMinutes, @BasePrice = BasePrice FROM DogSizes WHERE Id = @DogSizeId;
+                    SET @EndTime = DATEADD(MINUTE, @Duration, @AppointmentDate);
+
+                    IF EXISTS (
+                        SELECT 1 FROM Appointments a JOIN DogSizes ds ON a.DogSizeId = ds.Id
+                        WHERE @AppointmentDate < DATEADD(MINUTE, ds.DurationMinutes, a.AppointmentDate)
+                          AND @EndTime > a.AppointmentDate
+                    )
                     BEGIN
-                        DECLARE @BasePrice DECIMAL(18,2);
-                        DECLARE @PrevApptsCount INT;
-                        DECLARE @FinalPrice DECIMAL(18,2);
+                        RAISERROR('Conflict: Time slot occupied.', 16, 1);
+                        RETURN;
+                    END
 
-                        -- Fetch the base price for the selected dog size
-                        SELECT @BasePrice = BasePrice FROM DogSizes WHERE Id = @DogSizeId;
+                    DECLARE @Count INT, @FinalPrice DECIMAL(18,2);
+                    SELECT @Count = COUNT(*) FROM Appointments WHERE UserId = @UserId;
+                    SET @FinalPrice = CASE WHEN @Count >= 3 THEN @BasePrice * 0.9 ELSE @BasePrice END;
 
-                        -- Count how many appointments the user has had in the past
-                        SELECT @PrevApptsCount = COUNT(*) FROM Appointments WHERE UserId = @UserId;
+                    INSERT INTO Appointments (UserId, DogSizeId, AppointmentDate, FinalPrice, CreatedAt)
+                    VALUES (@UserId, @DogSizeId, @AppointmentDate, @FinalPrice, GETUTCDATE());
+                END
+            ");
 
-                        -- Calculate discount: if there are 3 or more appointments, 10% discount
-                        IF @PrevApptsCount >= 3
-                            SET @FinalPrice = @BasePrice * 0.9;
-                        ELSE
-                            SET @FinalPrice = @BasePrice;
+            migrationBuilder.Sql(@"
+                CREATE PROCEDURE sp_UpdateAppointment 
+                    @AppointmentId INT, @UserId INT, @DogSizeId INT, @AppointmentDate DATETIME
+                AS
+                BEGIN
+                    SET NOCOUNT ON;
+                    DECLARE @Duration INT, @EndTime DATETIME, @BasePrice DECIMAL(18,2);
+                    SELECT @Duration = DurationMinutes, @BasePrice = BasePrice FROM DogSizes WHERE Id = @DogSizeId;
+                    SET @EndTime = DATEADD(MINUTE, @Duration, @AppointmentDate);
 
-                        -- Insert the new appointment into the table
-                        INSERT INTO Appointments (UserId, DogSizeId, AppointmentDate, CreatedAt, FinalPrice)
-                        VALUES (@UserId, @DogSizeId, @AppointmentDate, GETUTCDATE(), @FinalPrice);
-                    END')
-                ");
+                    IF EXISTS (
+                        SELECT 1 FROM Appointments a JOIN DogSizes ds ON a.DogSizeId = ds.Id
+                        WHERE a.Id <> @AppointmentId
+                          AND @AppointmentDate < DATEADD(MINUTE, ds.DurationMinutes, a.AppointmentDate)
+                          AND @EndTime > a.AppointmentDate
+                    )
+                    BEGIN
+                        RAISERROR('Conflict: Time slot occupied.', 16, 1);
+                        RETURN;
+                    END
+
+                    DECLARE @Count INT, @FinalPrice DECIMAL(18,2);
+                    SELECT @Count = COUNT(*) FROM Appointments WHERE UserId = @UserId;
+                    SET @FinalPrice = CASE WHEN @Count >= 3 THEN @BasePrice * 0.9 ELSE @BasePrice END;
+
+                    UPDATE Appointments SET DogSizeId = @DogSizeId, AppointmentDate = @AppointmentDate, FinalPrice = @FinalPrice
+                    WHERE Id = @AppointmentId AND UserId = @UserId;
+                END
+            ");
+            migrationBuilder.Sql(@"
+                IF EXISTS (SELECT * FROM sys.views WHERE name = 'v_AppointmentSummaries')
+                    DROP VIEW vw_AppointmentSummaries;
+            ");
+
+            migrationBuilder.Sql(@"
+                CREATE VIEW vw_AppointmentSummaries AS
+                SELECT 
+                    a.Id AS AppointmentId,
+                    u.FirstName AS CustomerName,
+                    ds.SizeName AS DogSizeName,
+                    a.AppointmentDate,
+                    a.FinalPrice AS Price,
+                    a.CreatedAt
+                FROM Appointments a
+                JOIN Users u ON a.UserId = u.Id
+                JOIN DogSizes ds ON a.DogSizeId = ds.Id;
+            ");
         }
 
         /// <inheritdoc />

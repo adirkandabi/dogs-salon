@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DogsSalon.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260415103707_AddUpdateProcedure")]
-    partial class AddUpdateProcedure
+    [Migration("20260415131435_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
