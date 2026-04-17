@@ -36,7 +36,18 @@ export const useAppointments = () => {
       alert(err.response?.data?.message || "Delete failed");
     }
   };
-
+  const addAppointment = async (appointmentData) => {
+    try {
+      await appointmentsAPI.create(appointmentData);
+      await fetchAppointments();
+      return { success: true };
+    } catch (err) {
+      return {
+        success: false,
+        error: err.response?.data?.message || "Failed to add",
+      };
+    }
+  };
   // Client-side filtering logic
   const filteredAppointments = appointments.filter((app) => {
     const matchesName = app.customerName
@@ -54,6 +65,7 @@ export const useAppointments = () => {
     error,
     filters,
     setFilters,
+    addAppointment,
     refresh: fetchAppointments,
     deleteAppointment,
   };

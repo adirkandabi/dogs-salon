@@ -24,5 +24,7 @@ export const appointmentsAPI = {
   delete: (id) => api.delete(`/Appointments/${id}`),
   update: (id, data) => api.put(`/Appointments/${id}`, data),
 };
-
+export const dogSizesAPI = {
+  getAll: () => api.get("/dogs"),
+};
 export default api;
