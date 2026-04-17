@@ -73,8 +73,6 @@ public class AppointmentService
     // Update appointment 
     public async Task<bool> UpdateAppointmentAsync(int appointmentId, int userId, CreateAppointmentDto dto)
     {
-        try
-        {
             var parameters = new[] {
             new SqlParameter("@AppointmentId", appointmentId),
             new SqlParameter("@UserId", userId),
@@ -86,11 +84,6 @@ public class AppointmentService
                 "EXEC sp_UpdateAppointment @AppointmentId, @UserId, @DogSizeId, @AppointmentDate", parameters);
 
             return true;
-        }
-        catch (SqlException ex) 
-        {
-            throw new InvalidOperationException(ex.Message);
-        }
-        
+         
     }
 }

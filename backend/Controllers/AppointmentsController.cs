@@ -48,10 +48,10 @@ public class AppointmentsController : ControllerBase
         try
         {
             var success = await _appointmentService.UpdateAppointmentAsync(id, GetUserId(), dto);
-            if (!success) return NotFound(new { message = "Appointment not found" });
+            
             return Ok(new { message = "Updated successfully" });
         }
-        catch (InvalidOperationException ex)
+        catch (Exception ex)
         {
             return BadRequest(new { message = ex.Message });
         }
