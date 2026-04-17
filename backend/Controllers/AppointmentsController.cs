@@ -60,9 +60,16 @@ public class AppointmentsController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {
-        var success = await _appointmentService.DeleteAppointmentAsync(id, GetUserId());
-        if (!success) return NotFound(new { message = "Appointment not found or not authorized" });
+        try
+        {
 
-        return Ok(new { message = "Appointment deleted successfully" });
+            var success = await _appointmentService.DeleteAppointmentAsync(id, GetUserId());
+            if (!success) return NotFound(new { message = "Appointment not found or not authorized" });
+
+            return Ok(new { message = "Appointment deleted successfully" });
+        }catch(InvalidOperationException ex)
+        {
+            return BadRequest(new { message = "Can not delete today's appointments" });
+        }
     }
 }

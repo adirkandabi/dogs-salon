@@ -64,7 +64,10 @@ public class AppointmentService
             .FirstOrDefaultAsync(a => a.Id == appointmentId && a.UserId == userId);
 
         if (appointment == null) return false; // The appointment does not exist or does not belong to the user
-
+        if(appointment.AppointmentDate.Date == DateTime.Today)
+        {
+            throw new InvalidOperationException();
+        }
         _context.Appointments.Remove(appointment);
         await _context.SaveChangesAsync();
         return true;
