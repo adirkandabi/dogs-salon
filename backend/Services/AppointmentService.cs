@@ -2,6 +2,7 @@
 using DogsSalon.DTOs;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Data.SqlClient;
+using DogsSalon.Models;
 
 namespace DogsSalon.Services;
 
@@ -12,6 +13,12 @@ public class AppointmentService
     public AppointmentService(ApplicationDbContext context)
     {
         _context = context;
+    }
+    public async Task<List<DogSizeDto>> GetDogSizes()
+    {
+                return await _context.DogSizes
+            .Select(ds => new DogSizeDto(ds.Id, ds.SizeName, ds.DurationMinutes, ds.BasePrice))
+            .ToListAsync();
     }
 
     // Create appointment and calculate discount using stored procedure

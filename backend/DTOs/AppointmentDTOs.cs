@@ -11,4 +11,5 @@
         decimal Price,
         DateTime CreatedAt
     );
+    public record DogSizeDto(int Id,string SizeName, int DurationMinutes, decimal BasePrice);
 }

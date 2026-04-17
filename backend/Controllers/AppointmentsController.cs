@@ -27,7 +27,7 @@ public class AppointmentsController : ControllerBase
         var summaries = await _appointmentService.GetAllSummariesAsync();
         return Ok(summaries);
     }
-
+    
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateAppointmentDto dto)
     {
