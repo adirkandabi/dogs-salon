@@ -11,27 +11,43 @@ import {
   Alert,
 } from "@mui/material";
 import { dogSizesAPI } from "../services/api";
-
-const AddAppointmentDialog = ({ open, onClose, onAdd }) => {
+import { useAppointments } from "../hooks/useAppointments";
+const INITIAL_FORM = {
+  appointmentDate: "",
+  dogSizeId: "",
+};
+const AppointmentDialog = ({ open, onClose, onSave, appointment, loading }) => {
   const [dogSizes, setDogSizes] = useState([]);
-  const [formData, setFormData] = useState({
-    appointmentDate: "",
-    dogSizeId: "",
-  });
+  const [formData, setFormData] = useState(INITIAL_FORM);
   const [error, setError] = useState("");
-
   useEffect(() => {
     dogSizesAPI.getAll().then((res) => setDogSizes(res.data));
   }, []);
+  useEffect(() => {
+    if (appointment) {
+      setFormData({
+        appointmentDate: appointment.appointmentDate.slice(0, 16), // פורמט datetime-local
+        dogSizeId: appointment.dogSizeId || "",
+      });
+    } else {
+      setFormData(INITIAL_FORM);
+    }
+  }, [appointment, open]);
 
+  const isEdit = Boolean(appointment);
   const handleSubmit = async () => {
-    const result = await onAdd(formData);
+    const result = await onSave(formData, appointment?.id);
     if (result.success) {
-      onClose();
+      handleClose();
       setFormData({ appointmentDate: "", dogSizeId: "" });
     } else {
       setError(result.error);
     }
+  };
+  const handleClose = () => {
+    setFormData(INITIAL_FORM);
+    setError("");
+    onClose();
   };
   const getMinDateTime = () => {
     const now = new Date();
@@ -41,8 +57,10 @@ const AddAppointmentDialog = ({ open, onClose, onAdd }) => {
   const selectedSize = dogSizes.find((s) => s.id === formData.dogSizeId);
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs">
-      <DialogTitle>Book a New Appointment</DialogTitle>
+    <Dialog open={open} onClose={handleClose} fullWidth maxWidth="xs">
+      <DialogTitle>
+        {isEdit ? "Edit Appointment" : "Book New Appointment"}
+      </DialogTitle>
       <DialogContent
         sx={{
           display: "flex",
@@ -58,9 +76,11 @@ const AddAppointmentDialog = ({ open, onClose, onAdd }) => {
           type="datetime-local"
           label="Date & Time"
           InputLabelProps={{ shrink: true }}
-          inputProps={{
-            placeholder: "",
-            min: getMinDateTime(),
+          InputProps={{
+            inputProps: {
+              min: getMinDateTime(),
+              step: 1800,
+            },
           }}
           value={formData.appointmentDate}
           onClick={(e) => {
@@ -109,7 +129,7 @@ const AddAppointmentDialog = ({ open, onClose, onAdd }) => {
         {error && <Alert severity="error">{error}</Alert>}
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={handleClose}>Cancel</Button>
         <Button
           onClick={handleSubmit}
           variant="contained"
@@ -119,11 +139,11 @@ const AddAppointmentDialog = ({ open, onClose, onAdd }) => {
             new Date(formData.appointmentDate) < new Date()
           }
         >
-          Confirm Booking
+          {loading ? "Saving..." : isEdit ? "Update" : "Confirm"}
         </Button>
       </DialogActions>
     </Dialog>
   );
 };
 
-export default AddAppointmentDialog;
+export default AppointmentDialog;

@@ -37,18 +37,38 @@ export const useAppointments = () => {
     }
   };
   const addAppointment = async (appointmentData) => {
+    setLoading(true);
     try {
       await appointmentsAPI.create(appointmentData);
       await fetchAppointments();
+
       return { success: true };
     } catch (err) {
       return {
         success: false,
         error: err.response?.data?.message || "Failed to add",
       };
+    } finally {
+      setLoading(false);
     }
   };
-  // Client-side filtering logic
+
+  const updateAppointment = async (id, updatedData) => {
+    setLoading(true);
+    try {
+      await appointmentsAPI.update(id, updatedData);
+      await fetchAppointments();
+      return { success: true };
+    } catch (err) {
+      return {
+        success: false,
+        error: err.response?.data?.message || "Update failed",
+      };
+    } finally {
+      setLoading(false);
+    }
+  };
+  // filtering logic
   const filteredAppointments = appointments.filter((app) => {
     const matchesName = app.customerName
       .toLowerCase()
@@ -64,8 +84,10 @@ export const useAppointments = () => {
     loading,
     error,
     filters,
+
     setFilters,
     addAppointment,
+    updateAppointment,
     refresh: fetchAppointments,
     deleteAppointment,
   };

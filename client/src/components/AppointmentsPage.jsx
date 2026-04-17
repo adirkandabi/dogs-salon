@@ -20,10 +20,11 @@ import {
   Button,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
+import EditIcon from "@mui/icons-material/Edit";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import Navbar from "../components/Navbar";
 import { useAppointments } from "../hooks/useAppointments";
-import AddAppointmentDialog from "./AddAppointmentDialog";
+import AppointmentDialog from "./AppointmentDialog";
 
 const AppointmentsPage = () => {
   const {
@@ -31,10 +32,12 @@ const AppointmentsPage = () => {
     loading,
     filters,
     setFilters,
+    updateAppointment,
     deleteAppointment,
     addAppointment,
   } = useAppointments();
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [editingApp, setEditingApp] = useState(null);
   const [selectedApp, setSelectedApp] = useState(null);
 
   const currentUserId = localStorage.getItem("userId");
@@ -139,7 +142,17 @@ const AppointmentsPage = () => {
                     <TableCell>{app.customerName}</TableCell>
                     <TableCell>{app.dogSizeName}</TableCell>
                     <TableCell>
-                      {new Date(app.appointmentDate).toLocaleString()}
+                      {new Date(app.appointmentDate).toLocaleDateString(
+                        "he-IL",
+                        {
+                          day: "2-digit",
+                          month: "2-digit",
+                          year: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          hour12: false,
+                        },
+                      )}
                     </TableCell>
 
                     <TableCell align="center">
@@ -151,17 +164,25 @@ const AppointmentsPage = () => {
                         <VisibilityIcon />
                       </IconButton>
                       {isOwner(app.userId) && (
-                        <IconButton
-                          color="error"
-                          disabled={isToday(app.appointmentDate)}
-                          onClick={() => {
-                            if (window.confirm("Are you sure?")) {
-                              deleteAppointment(app.appointmentId);
-                            }
-                          }}
-                        >
-                          <DeleteIcon />
-                        </IconButton>
+                        <>
+                          <IconButton
+                            color="info"
+                            onClick={() => setEditingApp(app)}
+                          >
+                            <EditIcon />
+                          </IconButton>
+                          <IconButton
+                            color="error"
+                            disabled={isToday(app.appointmentDate)}
+                            onClick={() => {
+                              if (window.confirm("Are you sure?")) {
+                                deleteAppointment(app.appointmentId);
+                              }
+                            }}
+                          >
+                            <DeleteIcon />
+                          </IconButton>
+                        </>
                       )}
                     </TableCell>
                   </TableRow>
@@ -177,10 +198,18 @@ const AppointmentsPage = () => {
             </TableBody>
           </Table>
         </TableContainer>
-        <AddAppointmentDialog
-          open={isAddOpen}
-          onClose={() => setIsAddOpen(false)}
-          onAdd={addAppointment}
+        <AppointmentDialog
+          open={Boolean(editingApp) || isAddOpen}
+          onClose={() => {
+            setIsAddOpen(false);
+            setEditingApp(null);
+          }}
+          onSave={(data) =>
+            editingApp
+              ? updateAppointment(editingApp.appointmentId, data)
+              : addAppointment(data)
+          }
+          loading={loading}
         />
       </Container>
       <Dialog
@@ -205,7 +234,17 @@ const AppointmentsPage = () => {
               </Typography>
               <Typography variant="subtitle1">
                 <strong>Appointment Date:</strong>{" "}
-                {new Date(selectedApp.appointmentDate).toLocaleString()}
+                {new Date(selectedApp.appointmentDate).toLocaleDateString(
+                  "he-IL",
+                  {
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    hour12: false,
+                  },
+                )}
               </Typography>
               <Typography variant="subtitle1">
                 <strong>Price:</strong> ₪{selectedApp.price}
@@ -213,7 +252,14 @@ const AppointmentsPage = () => {
               <hr />
               <Typography variant="body2" color="text.secondary">
                 <strong>Request Created At:</strong>{" "}
-                {new Date(selectedApp.createdAt).toLocaleString()}
+                {new Date(selectedApp.createdAt).toLocaleDateString("he-IL", {
+                  day: "2-digit",
+                  month: "2-digit",
+                  year: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  hour12: false,
+                })}
               </Typography>
             </Box>
           )}
