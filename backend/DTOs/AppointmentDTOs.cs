@@ -4,6 +4,7 @@
 
     public record AppointmentSummaryDto(
         int AppointmentId,
+        int UserId,
         string CustomerName,
         string DogSizeName,
         DateTime AppointmentDate,

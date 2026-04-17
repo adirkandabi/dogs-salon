@@ -41,6 +41,7 @@ public class AppointmentService
         return await _context.AppointmentSummaries
             .Select(v => new AppointmentSummaryDto(
                 v.AppointmentId,
+                v.UserId,
                 v.CustomerName,
                 v.DogSizeName,
                 v.AppointmentDate,

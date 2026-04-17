@@ -151,7 +151,7 @@ namespace DogsSalon.Migrations
                 END
             ");
             migrationBuilder.Sql(@"
-                IF EXISTS (SELECT * FROM sys.views WHERE name = 'v_AppointmentSummaries')
+                IF EXISTS (SELECT * FROM sys.views WHERE name = 'vw_AppointmentSummaries')
                     DROP VIEW vw_AppointmentSummaries;
             ");
 
