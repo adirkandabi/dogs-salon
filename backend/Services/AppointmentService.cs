@@ -85,11 +85,12 @@ public class AppointmentService
             var rowsAffected = await _context.Database.ExecuteSqlRawAsync(
                 "EXEC sp_UpdateAppointment @AppointmentId, @UserId, @DogSizeId, @AppointmentDate", parameters);
 
-            return rowsAffected > 0;
+            return true;
         }
-        catch (SqlException ex) when (ex.Number == 50000 || ex.Message.Contains("Conflict"))
+        catch (SqlException ex) 
         {
             throw new InvalidOperationException(ex.Message);
         }
+        
     }
 }
