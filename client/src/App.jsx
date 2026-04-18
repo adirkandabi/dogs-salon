@@ -31,7 +31,13 @@ const ProtectedRoute = ({ children }) => {
   }
   return children;
 };
-
+const PublicRoute = ({ children }) => {
+  const token = localStorage.getItem("token");
+  if (token) {
+    return <Navigate to="/appointments" replace />;
+  }
+  return children;
+};
 function App() {
   return (
     <ThemeProvider theme={theme}>
@@ -39,9 +45,22 @@ function App() {
       <Router>
         <Routes>
           {/* Public Routes */}
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
-
+          <Route
+            path="/login"
+            element={
+              <PublicRoute>
+                <LoginPage />
+              </PublicRoute>
+            }
+          />
+          <Route
+            path="/register"
+            element={
+              <PublicRoute>
+                <RegisterPage />
+              </PublicRoute>
+            }
+          />
           {/* Protected Route - Only logged-in users can see appointments */}
           <Route
             path="/appointments"

@@ -51,6 +51,9 @@ const AppointmentsPage = () => {
     const appointmentDate = new Date(dateString).toISOString().split("T")[0];
     return today === appointmentDate;
   };
+  const isPast = (dateString) => {
+    return new Date(dateString) < new Date();
+  };
   const handleOpenDetails = (app) => {
     setSelectedApp(app);
   };
@@ -115,10 +118,21 @@ const AppointmentsPage = () => {
               },
             }}
           />
+
+          <Button
+            variant="outlined"
+            onClick={() => setFilters({ customerName: "", date: "" })}
+          >
+            Clear Filters
+          </Button>
         </Paper>
 
         {/* Table Section */}
-        <TableContainer component={Paper} elevation={3}>
+        <TableContainer
+          component={Paper}
+          elevation={3}
+          sx={{ marginBottom: 10 }}
+        >
           <Table>
             <TableHead sx={{ bgcolor: "#eeeeee" }}>
               <TableRow>
@@ -137,57 +151,79 @@ const AppointmentsPage = () => {
                   </TableCell>
                 </TableRow>
               ) : (
-                appointments.map((app) => (
-                  <TableRow key={app.appointmentId}>
-                    <TableCell>{app.customerName}</TableCell>
-                    <TableCell>{app.dogSizeName}</TableCell>
-                    <TableCell>
-                      {new Date(app.appointmentDate).toLocaleDateString(
-                        "he-IL",
-                        {
-                          day: "2-digit",
-                          month: "2-digit",
-                          year: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                          hour12: false,
-                        },
-                      )}
-                    </TableCell>
-
-                    <TableCell align="center">
-                      <IconButton
-                        color="primary"
-                        title="View Details"
-                        onClick={() => handleOpenDetails(app)}
+                appointments
+                  .sort(
+                    (a, b) =>
+                      new Date(a.appointmentDate) - new Date(b.appointmentDate),
+                  )
+                  .map((app) => {
+                    const past = isPast(app.appointmentDate);
+                    return (
+                      <TableRow
+                        key={app.appointmentId}
+                        sx={{
+                          bgcolor: past ? "action.hover" : "inherit",
+                          opacity: past ? 0.7 : 1,
+                        }}
                       >
-                        <VisibilityIcon />
-                      </IconButton>
-                      {isOwner(app.userId) && (
-                        <>
+                        <TableCell
+                          sx={{ fontStyle: past ? "italic" : "normal" }}
+                        >
+                          {app.customerName} {past && "(Past)"}
+                        </TableCell>
+                        <TableCell>{app.dogSizeName}</TableCell>
+                        <TableCell>
+                          {new Date(app.appointmentDate).toLocaleDateString(
+                            "he-IL",
+                            {
+                              day: "2-digit",
+                              month: "2-digit",
+                              year: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                              hour12: false,
+                            },
+                          )}
+                        </TableCell>
+
+                        <TableCell align="center">
                           <IconButton
-                            color="info"
-                            onClick={() => setEditingApp(app)}
+                            color="primary"
+                            title="View Details"
+                            onClick={() => handleOpenDetails(app)}
                           >
-                            <EditIcon />
+                            <VisibilityIcon />
                           </IconButton>
-                          <IconButton
-                            color="error"
-                            disabled={isToday(app.appointmentDate)}
-                            onClick={() => {
-                              if (window.confirm("Are you sure?")) {
-                                deleteAppointment(app.appointmentId);
-                              }
-                            }}
-                          >
-                            <DeleteIcon />
-                          </IconButton>
-                        </>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))
+                          {isOwner(app.userId) && (
+                            <>
+                              <IconButton
+                                color="info"
+                                onClick={() => setEditingApp(app)}
+                                disabled={past}
+                                sx={{ display: past ? "none" : "inline-flex" }}
+                              >
+                                <EditIcon />
+                              </IconButton>
+                              <IconButton
+                                color="error"
+                                disabled={past || isToday(app.appointmentDate)}
+                                onClick={() => {
+                                  if (window.confirm("Are you sure?")) {
+                                    deleteAppointment(app.appointmentId);
+                                  }
+                                }}
+                                sx={{ display: past ? "none" : "inline-flex" }}
+                              >
+                                <DeleteIcon />
+                              </IconButton>
+                            </>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
               )}
+
               {!loading && appointments.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={5} align="center">
@@ -210,6 +246,7 @@ const AppointmentsPage = () => {
               : addAppointment(data)
           }
           loading={loading}
+          appointment={editingApp}
         />
       </Container>
       <Dialog
