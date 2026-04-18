@@ -37,7 +37,6 @@ export const useAppointments = () => {
     }
   };
   const addAppointment = async (appointmentData) => {
-    setLoading(true);
     try {
       await appointmentsAPI.create(appointmentData);
       await fetchAppointments();
@@ -48,13 +47,10 @@ export const useAppointments = () => {
         success: false,
         error: err.response?.data?.message || "Failed to add",
       };
-    } finally {
-      setLoading(false);
     }
   };
 
   const updateAppointment = async (id, updatedData) => {
-    setLoading(true);
     try {
       await appointmentsAPI.update(id, updatedData);
       await fetchAppointments();
@@ -64,8 +60,6 @@ export const useAppointments = () => {
         success: false,
         error: err.response?.data?.message || "Update failed",
       };
-    } finally {
-      setLoading(false);
     }
   };
   // filtering logic

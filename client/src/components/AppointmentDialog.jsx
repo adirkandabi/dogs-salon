@@ -16,10 +16,11 @@ const INITIAL_FORM = {
   appointmentDate: "",
   dogSizeId: "",
 };
-const AppointmentDialog = ({ open, onClose, onSave, appointment, loading }) => {
+const AppointmentDialog = ({ open, onClose, onSave, appointment }) => {
   const [dogSizes, setDogSizes] = useState([]);
   const [formData, setFormData] = useState(INITIAL_FORM);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   useEffect(() => {
     dogSizesAPI.getAll().then((res) => setDogSizes(res.data));
   }, []);
@@ -36,6 +37,7 @@ const AppointmentDialog = ({ open, onClose, onSave, appointment, loading }) => {
 
   const isEdit = Boolean(appointment);
   const handleSubmit = async () => {
+    setLoading(true);
     const result = await onSave(formData, appointment?.id);
     if (result.success) {
       handleClose();
@@ -43,6 +45,7 @@ const AppointmentDialog = ({ open, onClose, onSave, appointment, loading }) => {
     } else {
       setError(result.error);
     }
+    setLoading(false);
   };
   const handleClose = () => {
     setFormData(INITIAL_FORM);
@@ -84,11 +87,17 @@ const AppointmentDialog = ({ open, onClose, onSave, appointment, loading }) => {
           }}
           value={formData.appointmentDate}
           onClick={(e) => {
-            e.target?.showPicker();
+            const input = e.currentTarget.querySelector("input");
+            input?.showPicker();
           }}
-          onChange={(e) =>
-            setFormData({ ...formData, appointmentDate: e.target.value })
-          }
+          onChange={(e) => {
+            if (new Date(e.target.value) < new Date()) {
+              setError("Please select a future date and time.");
+            } else {
+              setError("");
+            }
+            setFormData({ ...formData, appointmentDate: e.target.value });
+          }}
           sx={{
             width: 200,
             "& input::-webkit-datetime-edit-fields-wrapper": {

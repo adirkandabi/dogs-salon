@@ -25,6 +25,7 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import Navbar from "../components/Navbar";
 import { useAppointments } from "../hooks/useAppointments";
 import AppointmentDialog from "./AppointmentDialog";
+import { CollectionsBookmarkOutlined } from "@mui/icons-material";
 
 const AppointmentsPage = () => {
   const {
@@ -108,7 +109,8 @@ const AppointmentsPage = () => {
             }}
             value={filters.date}
             onClick={(e) => {
-              e.target?.showPicker();
+              const input = e.currentTarget.querySelector("input");
+              input?.showPicker();
             }}
             onChange={(e) => setFilters({ ...filters, date: e.target.value })}
             sx={{
@@ -245,7 +247,6 @@ const AppointmentsPage = () => {
               ? updateAppointment(editingApp.appointmentId, data)
               : addAppointment(data)
           }
-          loading={loading}
           appointment={editingApp}
         />
       </Container>
